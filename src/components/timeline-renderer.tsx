@@ -48,14 +48,14 @@ function TimelineEventView({
       className={cn(
         'group grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-[var(--space-s)] rounded-[var(--ds-radius-md)] transition-colors',
         isMessage
-          ? 'px-[var(--space-xxs)] py-[var(--space-xs)]'
-          : 'border border-transparent bg-white/78 px-[var(--space-s)] py-[var(--space-s)] shadow-[0_12px_36px_rgba(0,20,63,0.04)]',
-        isInspectable && 'cursor-pointer hover:border-[color:var(--ds-color-border-subtle)] hover:bg-white',
-        isSelected && 'border-[color:var(--ds-color-ink)] bg-[color:var(--ds-color-surface-muted)]'
+          ? 'px-0 py-[var(--space-xs)]'
+          : 'border border-[color:rgba(0,20,63,0.06)] bg-white/72 px-[var(--space-s)] py-[var(--space-s)] shadow-[0_18px_44px_rgba(0,20,63,0.045)] backdrop-blur-sm',
+        isInspectable && 'cursor-pointer hover:border-[color:rgba(0,20,63,0.12)] hover:bg-white/88',
+        isSelected && 'border-[color:var(--ds-color-ink)] bg-white'
       )}
       onClick={isInspectable ? onSelect : undefined}
     >
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-[var(--ds-radius-md)] bg-[color:var(--ds-color-surface-muted)] text-[color:var(--ds-color-ink)]">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-[var(--ds-radius-md)] border border-[color:rgba(0,20,63,0.06)] bg-white/78 text-[color:var(--ds-color-ink)] shadow-[0_10px_18px_rgba(0,20,63,0.03)]">
         {event.kind === 'message' && event.role === 'user' ? <UserRound /> : null}
         {event.kind === 'message' && event.role !== 'user' ? <Bot /> : null}
         {event.kind === 'tool' ? <Hammer /> : null}
@@ -70,7 +70,7 @@ function TimelineEventView({
           </div>
           {isInspectable ? (
             <Button className="opacity-0 transition-opacity group-hover:opacity-100" size="xs" variant="outline">
-              Open detail
+              Expand
             </Button>
           ) : null}
         </div>

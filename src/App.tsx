@@ -21,6 +21,7 @@ import { getDefaultCopilotTools, type CopilotToolId } from '@/lib/copilot-adapte
 import { runCopilot } from '@/lib/client-agent'
 import { getInspectorItem, getTimelineSummary, type TimelineEvent } from '@/lib/timeline'
 import { cn } from '@/lib/utils'
+import heroStack from '@/assets/hero.png'
 import './App.css'
 
 const defaultToolSelection = getDefaultCopilotTools().reduce<ToolSelection>((selection, tool) => {
@@ -120,72 +121,99 @@ function App() {
 
         <section className="ai-center">
           <header className="ai-toolbar">
-            <div className="ai-toolbar__content">
-              <div className="ai-toolbar__meta">
-                <Badge variant="secondary">Copilot CLI ready</Badge>
-                <Badge variant="outline">{summary.tools} tools</Badge>
-                <Badge variant="outline">{summary.artifacts} artifacts</Badge>
+            <div className="ai-toolbar__frame">
+              <div className="ai-toolbar__hero-row">
+                <div className="ai-toolbar__meta">
+                  <Badge variant="secondary">Copilot CLI ready</Badge>
+                  <Badge variant="outline">{summary.tools} tools</Badge>
+                  <Badge variant="outline">{summary.artifacts} artifacts</Badge>
+                </div>
+                <div className="ai-toolbar__actions">
+                  <Select onValueChange={setModel} value={model}>
+                    <SelectTrigger className="max-w-48" size="sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {modelOptions.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {inspectorItem ? (
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button className="xl:hidden" size="icon-sm" variant="outline">
+                          <PanelRightOpen data-icon="inline-start" />
+                          <span className="sr-only">Open inspector</span>
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent className="w-[min(92vw,36rem)] p-0">
+                        <SheetTitle className="sr-only">Artifact inspector</SheetTitle>
+                        <InspectorPanel item={inspectorItem} onClose={() => setSelectedInspectorId(null)} />
+                      </SheetContent>
+                    </Sheet>
+                  ) : null}
+                </div>
               </div>
-              <p className="ai-toolbar__eyebrow">AI workspace</p>
-              <h2 className="ai-toolbar__title">{activeThread.title}</h2>
-              <p className="ai-toolbar__description">{activeThread.description}</p>
-            </div>
-            <div className="ai-toolbar__actions">
-              <Select onValueChange={setModel} value={model}>
-                <SelectTrigger className="max-w-48" size="sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {modelOptions.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {inspectorItem ? (
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button className="xl:hidden" size="icon-sm" variant="outline">
-                      <PanelRightOpen data-icon="inline-start" />
-                      <span className="sr-only">Open inspector</span>
+
+              <div className="ai-toolbar__hero">
+                <div className="ai-toolbar__content">
+                  <p className="ai-toolbar__eyebrow ai-soft-reveal">AI workspace</p>
+                  <h2 className="ai-toolbar__title ai-soft-reveal ai-soft-reveal--delay-1">{activeThread.title}</h2>
+                  <p className="ai-toolbar__description ai-soft-reveal ai-soft-reveal--delay-2">
+                    {activeThread.description}{' '}
+                    <span className="ai-highlight-ink">Keep the thread light while the tooling works underneath.</span>
+                  </p>
+                </div>
+
+                <div aria-hidden="true" className="ai-toolbar__art">
+                  <div className="ai-toolbar__art-shell">
+                    <img alt="" className="ai-toolbar__art-image" src={heroStack} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="tool-strip">
+                <div className="tool-strip__inner">
+                  {getDefaultCopilotTools().map((tool) => (
+                    <Button
+                      key={tool.id}
+                      className={cn('tool-toggle', toolSelection[tool.id] && 'tool-toggle--active')}
+                      onClick={() =>
+                        setToolSelection((selection) => ({
+                          ...selection,
+                          [tool.id]: !selection[tool.id],
+                        }))
+                      }
+                      size="sm"
+                      type="button"
+                      variant={toolSelection[tool.id] ? 'outline' : 'ghost'}
+                    >
+                      {tool.label}
                     </Button>
-                  </SheetTrigger>
-                  <SheetContent className="w-[min(92vw,36rem)] p-0">
-                    <SheetTitle className="sr-only">Artifact inspector</SheetTitle>
-                    <InspectorPanel item={inspectorItem} onClose={() => setSelectedInspectorId(null)} />
-                  </SheetContent>
-                </Sheet>
-              ) : null}
+                  ))}
+                </div>
+              </div>
             </div>
           </header>
 
-          <div className="tool-strip">
-            <div className="tool-strip__inner">
-              {getDefaultCopilotTools().map((tool) => (
-                <Button
-                  key={tool.id}
-                  className={cn('tool-toggle', toolSelection[tool.id] && 'tool-toggle--active')}
-                  onClick={() =>
-                    setToolSelection((selection) => ({
-                      ...selection,
-                      [tool.id]: !selection[tool.id],
-                    }))
-                  }
-                  size="sm"
-                  type="button"
-                  variant={toolSelection[tool.id] ? 'outline' : 'ghost'}
-                >
-                  {tool.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
           <ScrollArea className="min-h-0 flex-1">
             <div className="ai-timeline-frame">
+              {timelineEvents.length === 0 ? (
+                <section className="ai-stage-intro">
+                  <p className="ai-stage-intro__eyebrow">Quietly orchestrated</p>
+                  <h3 className="ai-stage-intro__title">
+                    <span className="ai-highlight-ink">Keep the conversation open.</span> Let the tools unfold behind it.
+                  </h3>
+                  <p className="ai-stage-intro__description">
+                    Search, inspect, and turn working notes into artifacts without crowding the page.
+                  </p>
+                </section>
+              ) : null}
               <TimelineRenderer events={timelineEvents} onSelect={setSelectedInspectorId} selectedId={selectedInspectorId} />
               {isRunning ? (
                 <div className="ai-runner-status">
