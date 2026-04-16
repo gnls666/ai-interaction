@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ChevronDown, Paperclip, Search, SendHorizontal, SlidersHorizontal, TerminalSquare } from 'lucide-react'
+import { ChevronDown, Paperclip, SendHorizontal, SlidersHorizontal } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupTextarea } from '@/components/ui/input-group'
-import { Separator } from '@/components/ui/separator'
 import type { UploadedFile } from '@/data/workspace'
 import { cn } from '@/lib/utils'
 import './ai-prompt-input.css'
@@ -59,16 +58,6 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
 
   return (
     <div className="ai-prompt">
-      <div className="ai-prompt__header">
-        <div>
-          <p className="ai-prompt__eyebrow">Prompt</p>
-          <h3 className="ai-prompt__title">{runtime === 'sdk' ? 'Copilot SDK input' : 'Copilot fallback input'}</h3>
-        </div>
-        <div className="ai-prompt__meta">
-          <span>{model}</span>
-          <span>{usage}% used</span>
-        </div>
-      </div>
       {attachedFiles.length > 0 ? (
         <div className="ai-prompt__files">
           {attachedFiles.map((file) => (
@@ -92,7 +81,7 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
               submitPrompt()
             }
           }}
-          placeholder="Ask Copilot to search, inspect files, draft an artifact, or patch the workspace..."
+          placeholder="Message Copilot about this workspace..."
           value={prompt}
         />
         <InputGroupAddon align="block-end" className="ai-prompt__bar">
@@ -130,19 +119,13 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <InputGroupText className="hidden sm:flex">
-              <Search />
-              Tooling ready
-            </InputGroupText>
-            <InputGroupText className="hidden md:flex">
-              <TerminalSquare />
-              {runtime === 'sdk' ? 'Copilot SDK' : 'CLI fallback'}
-            </InputGroupText>
+            {attachedFiles.length > 0 ? (
+              <InputGroupText className="hidden sm:flex">{attachedFiles.length} file{attachedFiles.length === 1 ? '' : 's'}</InputGroupText>
+            ) : null}
           </div>
           <div className="ai-prompt__actions">
-            <InputGroupText className={cn('ai-prompt__usage', usage > 70 && 'text-foreground')}>{usage}% used</InputGroupText>
-            <Separator className="h-5" orientation="vertical" />
-            <InputGroupText className="hidden md:flex">{model}</InputGroupText>
+            <InputGroupText className="hidden md:flex">{runtime === 'sdk' ? 'SDK' : 'CLI'} · {model}</InputGroupText>
+            <InputGroupText className={cn('ai-prompt__usage', usage > 70 && 'text-foreground')}>{usage}%</InputGroupText>
             <Button className="ai-prompt__send" disabled={disabled || !prompt.trim()} onClick={submitPrompt} size="icon" type="button">
               <SendHorizontal data-icon="inline-start" />
               <span className="sr-only">Send prompt</span>

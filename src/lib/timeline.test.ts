@@ -10,6 +10,9 @@ const events: TimelineEvent[] = [
     role: 'assistant',
     title: 'Copilot response',
     content: 'I found two parser branches.',
+    thinkingSummary: ['Reviewed the parser branches.', 'Prepared the next patch preview.'],
+    thinkingContent:
+      'Reviewed the parser branches.\nCompared duplicated scoring logic.\nPrepared the next patch preview.',
   },
   {
     id: 'tool-1',

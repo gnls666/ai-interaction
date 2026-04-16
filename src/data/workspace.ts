@@ -82,5 +82,8 @@ export const initialTimeline: TimelineEvent[] = [
     title: 'Copilot response',
     content:
       'I can run the parser search first, then produce a patch artifact. Writing files is disabled until you turn on the write tool.',
+    thinkingSummary: ['Reviewed the uploaded research request.', 'Checked current tool permissions before proposing the next step.'],
+    thinkingContent:
+      'Reviewed the uploaded research request.\nChecked which tools are enabled for the workspace.\nPrepared a response that keeps write access gated until you opt in.',
   },
 ]

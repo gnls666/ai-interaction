@@ -115,6 +115,64 @@ function getToolCompletionContent(event) {
   return event.data.success ? 'Tool completed without output.' : 'Tool failed without output.'
 }
 
+function normalizeThinkingLine(line) {
+  return line.trim().replace(/^([-*•]|\d+[.)])\s+/, '')
+}
+
+function extractThinkingSummary(content) {
+  const lines = content
+    .split('\n')
+    .map(normalizeThinkingLine)
+    .filter(Boolean)
+
+  if (lines.length > 0) {
+    return lines.slice(0, 2)
+  }
+
+  const sentence = content.trim()
+
+  return sentence ? [sentence] : []
+}
+
+function formatToolList(toolNames) {
+  if (toolNames.length === 0) {
+    return ''
+  }
+
+  if (toolNames.length === 1) {
+    return toolNames[0]
+  }
+
+  if (toolNames.length === 2) {
+    return `${toolNames[0]} and ${toolNames[1]}`
+  }
+
+  return `${toolNames.slice(0, -1).join(', ')}, and ${toolNames.at(-1)}`
+}
+
+function buildToolThinkingSummary(toolNames) {
+  const names = [...new Set(toolNames)].slice(-3)
+
+  if (names.length === 0) {
+    return []
+  }
+
+  return [`Used ${formatToolList(names)} before responding.`]
+}
+
+function attachThinking(message, reasoningContent, toolNames) {
+  const content = reasoningContent?.trim() ?? ''
+  const summary = content ? extractThinkingSummary(content) : buildToolThinkingSummary(toolNames)
+
+  if (content) {
+    message.thinkingContent = content
+  }
+
+  if (summary.length > 0) {
+    message.thinkingSummary = summary
+  }
+}
+
 function mapToolContentBlock(toolCallId, toolName, block, index) {
   if (block.type === 'terminal') {
     return {
@@ -162,6 +220,8 @@ function mapToolContentBlock(toolCallId, toolName, block, index) {
 export function mapSdkEventsToTimeline(events) {
   const timeline = []
   const toolNames = new Map()
+  const recentToolNames = []
+  let pendingReasoning = null
 
   for (const event of events) {
     if (event.type === 'tool.execution_start') {
@@ -186,6 +246,7 @@ export function mapSdkEventsToTimeline(events) {
         title: toolName,
         toolName,
       })
+      recentToolNames.push(toolName)
 
       for (const [index, block] of (event.data.result?.contents ?? []).entries()) {
         const artifact = mapToolContentBlock(event.data.toolCallId, toolName, block, index)
@@ -196,14 +257,32 @@ export function mapSdkEventsToTimeline(events) {
       }
     }
 
+    if (event.type === 'assistant.reasoning') {
+      const reasoningContent = event.data.content?.trim() ?? ''
+      const lastTimelineEvent = timeline.at(-1)
+
+      if (reasoningContent && lastTimelineEvent?.kind === 'message' && lastTimelineEvent.role === 'assistant') {
+        attachThinking(lastTimelineEvent, reasoningContent, recentToolNames)
+        recentToolNames.length = 0
+        pendingReasoning = null
+      } else {
+        pendingReasoning = reasoningContent
+      }
+    }
+
     if (event.type === 'assistant.message') {
-      timeline.push({
+      const message = {
         content: event.data.content,
         id: event.data.messageId,
         kind: 'message',
         role: 'assistant',
         title: 'Copilot response',
-      })
+      }
+
+      attachThinking(message, pendingReasoning, recentToolNames)
+      timeline.push(message)
+      recentToolNames.length = 0
+      pendingReasoning = null
     }
   }
 

@@ -10,6 +10,8 @@ export type TimelineEventBase = {
 export type MessageEvent = TimelineEventBase & {
   kind: 'message'
   role: 'user' | 'assistant' | 'system'
+  thinkingContent?: string
+  thinkingSummary?: string[]
 }
 
 export type ToolEvent = TimelineEventBase & {

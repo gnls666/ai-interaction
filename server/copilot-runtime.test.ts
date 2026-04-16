@@ -44,7 +44,7 @@ describe('buildSdkSessionConfig', () => {
 })
 
 describe('mapSdkEventsToTimeline', () => {
-  it('maps assistant, tool, and terminal output events into the existing timeline shape', () => {
+  it('maps assistant reasoning onto the final assistant message and preserves a short thinking summary', () => {
     const timeline = mapSdkEventsToTimeline([
       {
         id: 'evt-tool-start',
@@ -77,6 +77,15 @@ describe('mapSdkEventsToTimeline', () => {
           },
           success: true,
           toolCallId: 'tool-1',
+        },
+      },
+      {
+        id: 'evt-reasoning',
+        parentId: 'evt-tool-complete',
+        timestamp: '2026-04-16T12:00:02.500Z',
+        type: 'assistant.reasoning',
+        data: {
+          content: '- Gathered parser context\n- Compared duplicated scoring branches\n- Drafted a minimal response',
         },
       },
       {
@@ -120,9 +129,80 @@ describe('mapSdkEventsToTimeline', () => {
         id: 'msg-1',
         kind: 'message',
         role: 'assistant',
+        thinkingContent: '- Gathered parser context\n- Compared duplicated scoring branches\n- Drafted a minimal response',
+        thinkingSummary: ['Gathered parser context', 'Compared duplicated scoring branches'],
         title: 'Copilot response',
       },
     ])
+  })
+
+  it('falls back to recent tool activity when no explicit reasoning event is available', () => {
+    const timeline = mapSdkEventsToTimeline([
+      {
+        id: 'evt-tool-start-search',
+        parentId: null,
+        timestamp: '2026-04-16T12:00:00.000Z',
+        type: 'tool.execution_start',
+        data: {
+          arguments: { query: 'parseHoldings' },
+          toolCallId: 'tool-search',
+          toolName: 'search',
+        },
+      },
+      {
+        id: 'evt-tool-complete-search',
+        parentId: 'evt-tool-start-search',
+        timestamp: '2026-04-16T12:00:01.000Z',
+        type: 'tool.execution_complete',
+        data: {
+          result: {
+            content: 'Located parser references',
+          },
+          success: true,
+          toolCallId: 'tool-search',
+        },
+      },
+      {
+        id: 'evt-tool-start-read',
+        parentId: null,
+        timestamp: '2026-04-16T12:00:02.000Z',
+        type: 'tool.execution_start',
+        data: {
+          arguments: { path: 'src/parser.ts' },
+          toolCallId: 'tool-read',
+          toolName: 'read',
+        },
+      },
+      {
+        id: 'evt-tool-complete-read',
+        parentId: 'evt-tool-start-read',
+        timestamp: '2026-04-16T12:00:03.000Z',
+        type: 'tool.execution_complete',
+        data: {
+          result: {
+            content: 'Opened src/parser.ts',
+          },
+          success: true,
+          toolCallId: 'tool-read',
+        },
+      },
+      {
+        id: 'evt-assistant',
+        parentId: 'evt-tool-complete-read',
+        timestamp: '2026-04-16T12:00:04.000Z',
+        type: 'assistant.message',
+        data: {
+          content: 'I found the duplicated scoring branch near the parser tail.',
+          messageId: 'msg-2',
+        },
+      },
+    ])
+
+    expect(timeline.at(-1)).toMatchObject({
+      id: 'msg-2',
+      kind: 'message',
+      thinkingSummary: ['Used search and read before responding.'],
+    })
   })
 })
 
