@@ -15,6 +15,7 @@
     "template:unpack": "node scripts/template-bundle.mjs unpack --force"
   },
   "dependencies": {
+    "@github/copilot-sdk": "^0.2.2",
     "@tailwindcss/vite": "4.2.2",
     "ansi-to-html": "0.7.2",
     "class-variance-authority": "0.7.1",

@@ -1,4 +1,4 @@
-import type { CopilotToolId } from '@/lib/copilot-adapter'
+import { getFallbackCopilotCapabilities, type CopilotCapabilities, type CopilotToolId } from '@/lib/copilot-adapter'
 import type { UploadedFile } from '@/data/workspace'
 import type { TimelineEvent } from '@/lib/timeline'
 
@@ -12,6 +12,7 @@ type RunCopilotInput = {
 
 type RunCopilotResponse = {
   events: TimelineEvent[]
+  runtime?: 'sdk' | 'cli'
 }
 
 export async function runCopilot(input: RunCopilotInput): Promise<RunCopilotResponse> {
@@ -51,6 +52,21 @@ export async function runCopilot(input: RunCopilotInput): Promise<RunCopilotResp
           }`,
         },
       ],
+      runtime: 'cli',
     }
+  }
+}
+
+export async function getCopilotCapabilities(): Promise<CopilotCapabilities> {
+  try {
+    const response = await fetch('/api/copilot/capabilities')
+
+    if (!response.ok) {
+      throw new Error(`Copilot server returned ${response.status}`)
+    }
+
+    return (await response.json()) as CopilotCapabilities
+  } catch {
+    return getFallbackCopilotCapabilities()
   }
 }

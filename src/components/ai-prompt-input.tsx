@@ -24,6 +24,7 @@ type AiPromptInputProps = {
   model: string
   onAttachFiles: (files: UploadedFile[]) => void
   onSubmit: (prompt: string, mode: PromptMode) => void
+  runtime: 'sdk' | 'cli'
 }
 
 const promptModes: PromptMode[] = ['Auto', 'Agent', 'Manual']
@@ -39,7 +40,7 @@ async function readFiles(files: FileList): Promise<UploadedFile[]> {
   )
 }
 
-export function AiPromptInput({ attachedFiles, disabled = false, model, onAttachFiles, onSubmit }: AiPromptInputProps) {
+export function AiPromptInput({ attachedFiles, disabled = false, model, onAttachFiles, onSubmit, runtime }: AiPromptInputProps) {
   const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState<PromptMode>('Auto')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -61,7 +62,7 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
       <div className="ai-prompt__header">
         <div>
           <p className="ai-prompt__eyebrow">Prompt</p>
-          <h3 className="ai-prompt__title">Copilot workspace input</h3>
+          <h3 className="ai-prompt__title">{runtime === 'sdk' ? 'Copilot SDK input' : 'Copilot fallback input'}</h3>
         </div>
         <div className="ai-prompt__meta">
           <span>{model}</span>
@@ -131,11 +132,11 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
             </DropdownMenu>
             <InputGroupText className="hidden sm:flex">
               <Search />
-              Search ready
+              Tooling ready
             </InputGroupText>
             <InputGroupText className="hidden md:flex">
               <TerminalSquare />
-              Copilot CLI
+              {runtime === 'sdk' ? 'Copilot SDK' : 'CLI fallback'}
             </InputGroupText>
           </div>
           <div className="ai-prompt__actions">

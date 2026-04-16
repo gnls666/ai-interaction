@@ -8,7 +8,8 @@ An AI workspace prototype built with React, Vite, and shadcn/ui. The UI is tuned
 - file upload
 - tool and artifact timeline
 - on-demand artifact inspector
-- a local Copilot CLI adapter server
+- a local Copilot SDK server with CLI fallback
+- runtime-discovered model and tool capabilities
 
 ## Commands
 
@@ -21,7 +22,7 @@ pnpm lint
 pnpm build
 ```
 
-The Vite app runs on the usual dev port. The Copilot adapter server exposes a local HTTP endpoint for the front-end demo.
+The Vite app runs on the usual dev port. The local agent server exposes a Copilot SDK first HTTP endpoint for the front-end demo and falls back to the installed Copilot CLI when the SDK path is unavailable.
 
 ## Single-file Template
 
@@ -43,4 +44,4 @@ node scripts/template-bundle.mjs unpack templates/ai-interaction.template.json /
 ## Notes
 
 - `output/`, `.playwright-cli/`, and `.copilot-uploads/` are local-only and ignored by git.
-- The template bundle includes source files, public assets, fonts, and the Copilot adapter server.
+- The template bundle includes source files, public assets, fonts, and the Copilot SDK runtime server.

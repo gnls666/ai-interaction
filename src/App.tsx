@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Archive, CircleDot, GitBranch, PanelRightOpen, Plus, Search } from 'lucide-react'
 
 import { AiPromptInput } from '@/components/ai-prompt-input'
@@ -10,34 +10,32 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import {
-  initialTimeline,
-  modelOptions,
-  threads,
-  type ToolSelection,
-  type UploadedFile,
-} from '@/data/workspace'
-import { getDefaultCopilotTools, type CopilotToolId } from '@/lib/copilot-adapter'
-import { runCopilot } from '@/lib/client-agent'
+import { initialTimeline, threads, type ToolSelection, type UploadedFile } from '@/data/workspace'
+import { getFallbackCopilotCapabilities, type CopilotToolId } from '@/lib/copilot-adapter'
+import { getCopilotCapabilities, runCopilot } from '@/lib/client-agent'
 import { getInspectorItem, getTimelineSummary, type TimelineEvent } from '@/lib/timeline'
 import { cn } from '@/lib/utils'
 import heroStack from '@/assets/hero.png'
 import './App.css'
 
-const defaultToolSelection = getDefaultCopilotTools().reduce<ToolSelection>((selection, tool) => {
+const fallbackCapabilities = getFallbackCopilotCapabilities()
+
+const defaultToolSelection = fallbackCapabilities.tools.reduce<ToolSelection>((selection, tool) => {
   selection[tool.id] = tool.enabled
 
   return selection
 }, {} as ToolSelection)
 
 function App() {
+  const [capabilities, setCapabilities] = useState(fallbackCapabilities)
   const [selectedThreadId, setSelectedThreadId] = useState(threads[0].id)
   const [selectedInspectorId, setSelectedInspectorId] = useState<string | null>(null)
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(initialTimeline)
-  const [model, setModel] = useState(modelOptions[0].id)
+  const [model, setModel] = useState(fallbackCapabilities.models[0].id)
   const [toolSelection, setToolSelection] = useState<ToolSelection>(defaultToolSelection)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isRunning, setIsRunning] = useState(false)
+  const [lastRuntime, setLastRuntime] = useState<'sdk' | 'cli'>('sdk')
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === selectedThreadId) ?? threads[0],
     [selectedThreadId]
@@ -54,6 +52,38 @@ function App() {
         .map(([tool]) => tool as CopilotToolId),
     [toolSelection]
   )
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadCapabilities() {
+      const nextCapabilities = await getCopilotCapabilities()
+
+      if (cancelled) {
+        return
+      }
+
+      setCapabilities(nextCapabilities)
+      setToolSelection((currentSelection) =>
+        nextCapabilities.tools.reduce<ToolSelection>((selection, tool) => {
+          selection[tool.id] = currentSelection[tool.id] ?? tool.enabled
+
+          return selection
+        }, {} as ToolSelection)
+      )
+      setModel((currentModel) =>
+        nextCapabilities.models.some((option) => option.id === currentModel)
+          ? currentModel
+          : (nextCapabilities.models[0]?.id ?? currentModel)
+      )
+    }
+
+    void loadCapabilities()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function submitPrompt(prompt: string, modeLabel: string) {
     const userEvent: TimelineEvent = {
@@ -75,6 +105,7 @@ function App() {
     })
 
     setTimelineEvents((events) => [...events, ...result.events])
+    setLastRuntime(result.runtime ?? 'cli')
     setSelectedInspectorId(result.events.find((event) => event.kind === 'artifact')?.id ?? null)
     setIsRunning(false)
   }
@@ -124,7 +155,7 @@ function App() {
             <div className="ai-toolbar__frame">
               <div className="ai-toolbar__hero-row">
                 <div className="ai-toolbar__meta">
-                  <Badge variant="secondary">Copilot CLI ready</Badge>
+                  <Badge variant="secondary">{lastRuntime === 'sdk' ? 'Copilot SDK live' : 'Copilot CLI fallback'}</Badge>
                   <Badge variant="outline">{summary.tools} tools</Badge>
                   <Badge variant="outline">{summary.artifacts} artifacts</Badge>
                 </div>
@@ -135,7 +166,7 @@ function App() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {modelOptions.map((option) => (
+                        {capabilities.models.map((option) => (
                           <SelectItem key={option.id} value={option.id}>
                             {option.label}
                           </SelectItem>
@@ -179,7 +210,7 @@ function App() {
 
               <div className="tool-strip">
                 <div className="tool-strip__inner">
-                  {getDefaultCopilotTools().map((tool) => (
+                  {capabilities.tools.map((tool) => (
                     <Button
                       key={tool.id}
                       className={cn('tool-toggle', toolSelection[tool.id] && 'tool-toggle--active')}
@@ -230,6 +261,7 @@ function App() {
               model={model}
               onAttachFiles={(files) => setUploadedFiles((currentFiles) => [...currentFiles, ...files])}
               onSubmit={submitPrompt}
+              runtime={lastRuntime}
             />
           </div>
         </section>

@@ -9,12 +9,6 @@ export type Thread = {
   status: 'active' | 'queued' | 'archived'
 }
 
-export type ModelOption = {
-  id: string
-  label: string
-  description: string
-}
-
 export type UploadedFile = {
   id: string
   name: string
@@ -46,13 +40,6 @@ export const threads: Thread[] = [
     updatedAt: 'Yesterday',
     status: 'archived',
   },
-]
-
-export const modelOptions: ModelOption[] = [
-  { id: 'gpt-5.4', label: 'gpt-5.4', description: 'Deep agentic coding and planning' },
-  { id: 'gpt-5.3-codex', label: 'gpt-5.3-codex', description: 'Codex-optimized code editing' },
-  { id: 'gpt-5.2', label: 'gpt-5.2', description: 'Long-running professional work' },
-  { id: 'claude-sonnet-4.6', label: 'claude-sonnet-4.6', description: 'Copilot CLI compatible fallback' },
 ]
 
 export const initialTimeline: TimelineEvent[] = [
