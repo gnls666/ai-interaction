@@ -144,6 +144,31 @@ export function matchTemplateTrigger(text: string, caretIndex: number) {
   }
 }
 
+export function filterStructuredPromptTemplates({
+  query,
+  trigger,
+}: {
+  query: string
+  trigger: '/' | '@'
+}) {
+  const normalizedQuery = query.trim().toLowerCase()
+
+  return structuredPromptTemplates.filter((template) => {
+    if (template.trigger !== trigger) {
+      return false
+    }
+
+    if (!normalizedQuery) {
+      return true
+    }
+
+    return (
+      template.keyword.toLowerCase().includes(normalizedQuery) ||
+      template.label.toLowerCase().includes(normalizedQuery)
+    )
+  })
+}
+
 function normalizePromptWhitespace(value: string) {
   return value.replace(/\s+/g, ' ').trim()
 }

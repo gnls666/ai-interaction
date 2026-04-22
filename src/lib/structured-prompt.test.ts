@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildStructuredPromptSubmission,
   createTemplateSlotValues,
+  filterStructuredPromptTemplates,
   matchTemplateTrigger,
   structuredPromptTemplates,
 } from './structured-prompt'
@@ -66,5 +67,25 @@ describe('matchTemplateTrigger', () => {
   it('ignores slash characters that are inside normal paths or URLs', () => {
     expect(matchTemplateTrigger('See /Users/demo/file.txt', 'See /Users/demo/file.txt'.length)).toBeNull()
     expect(matchTemplateTrigger('https://example.com/overlap', 'https://example.com/overlap'.length)).toBeNull()
+  })
+})
+
+describe('filterStructuredPromptTemplates', () => {
+  it('filters slash templates by query and trigger', () => {
+    expect(
+      filterStructuredPromptTemplates({
+        query: 'ov',
+        trigger: '/',
+      }).map((template) => template.id),
+    ).toEqual(['etf-overlap'])
+  })
+
+  it('keeps agent-style templates separate from slash templates', () => {
+    expect(
+      filterStructuredPromptTemplates({
+        query: 'wo',
+        trigger: '@',
+      }).map((template) => template.id),
+    ).toEqual(['workspace-agent'])
   })
 })

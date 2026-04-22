@@ -1,13 +1,14 @@
 import { X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 
+import { TemplateCommandMenu } from '@/components/prompt/template-command-menu'
 import { Button } from '@/components/ui/button'
 import { InputGroupTextarea } from '@/components/ui/input-group'
 import {
   buildStructuredPromptSubmission,
   createTemplateSlotValues,
+  filterStructuredPromptTemplates,
   matchTemplateTrigger,
-  structuredPromptTemplates,
   type StructuredPromptSubmission,
   type StructuredPromptTemplate,
 } from '@/lib/structured-prompt'
@@ -55,22 +56,9 @@ export function StructuredPromptEditor({
       return []
     }
 
-    const normalizedQuery = triggerState.query.toLowerCase()
-
-    return structuredPromptTemplates.filter((template) => {
-      if (template.trigger !== triggerState.trigger) {
-        return false
-      }
-
-      if (!normalizedQuery) {
-        return true
-      }
-
-      return (
-        template.keyword.toLowerCase().includes(normalizedQuery) ||
-        template.label.toLowerCase().includes(normalizedQuery) ||
-        template.description.toLowerCase().includes(normalizedQuery)
-      )
+    return filterStructuredPromptTemplates({
+      query: triggerState.query,
+      trigger: triggerState.trigger,
     })
   }, [triggerState])
 
@@ -219,62 +207,42 @@ export function StructuredPromptEditor({
   return (
     <div className="structured-editor">
       {!activeTemplate ? (
-        <div className="structured-editor__draft">
-          <InputGroupTextarea
-            ref={draftRef}
-            aria-label="Prompt"
-            className="ai-prompt__textarea"
-            disabled={disabled}
-            onChange={(event) => {
-              const nextText = event.target.value
-              const nextCaretIndex = event.target.selectionStart ?? nextText.length
+        <TemplateCommandMenu
+          onSelect={applyTemplate}
+          open={Boolean(triggerState)}
+          query={triggerState?.query ?? ''}
+          templates={filteredTemplates}
+          trigger={triggerState?.trigger ?? '/'}
+        >
+          <div className="structured-editor__draft">
+            <InputGroupTextarea
+              ref={draftRef}
+              aria-label="Prompt"
+              className="ai-prompt__textarea"
+              disabled={disabled}
+              onChange={(event) => {
+                const nextText = event.target.value
+                const nextCaretIndex = event.target.selectionStart ?? nextText.length
 
-              setDraftText(nextText)
-              syncTriggerState(nextText, nextCaretIndex)
-            }}
-            onKeyDown={handleDraftShortcut}
-            onKeyUp={(event) => {
-              syncTriggerState(event.currentTarget.value, event.currentTarget.selectionStart ?? event.currentTarget.value.length)
-            }}
-            onSelect={(event) => {
-              syncTriggerState(event.currentTarget.value, event.currentTarget.selectionStart ?? event.currentTarget.value.length)
-            }}
-            placeholder={placeholder}
-            value={draftText}
-          />
+                setDraftText(nextText)
+                syncTriggerState(nextText, nextCaretIndex)
+              }}
+              onKeyDown={handleDraftShortcut}
+              onKeyUp={(event) => {
+                syncTriggerState(event.currentTarget.value, event.currentTarget.selectionStart ?? event.currentTarget.value.length)
+              }}
+              onSelect={(event) => {
+                syncTriggerState(event.currentTarget.value, event.currentTarget.selectionStart ?? event.currentTarget.value.length)
+              }}
+              placeholder={placeholder}
+              value={draftText}
+            />
 
-          {triggerState && filteredTemplates.length > 0 ? (
-            <div className="structured-editor__menu" role="listbox">
-              <p className="structured-editor__menu-label">
-                {triggerState.trigger === '/' ? 'Templates' : 'Agents'}
-              </p>
-              {filteredTemplates.map((template) => (
-                <button
-                  key={template.id}
-                  className="structured-editor__menu-item"
-                  onMouseDown={(event) => {
-                    event.preventDefault()
-                    applyTemplate(template)
-                  }}
-                  type="button"
-                >
-                  <span className="structured-editor__menu-keyword">
-                    {template.trigger}
-                    {template.keyword}
-                  </span>
-                  <span className="structured-editor__menu-copy">
-                    <span className="structured-editor__menu-title">{template.label}</span>
-                    <span className="structured-editor__menu-description">{template.description}</span>
-                  </span>
-                </button>
-              ))}
+            <div className="structured-editor__hint">
+              Type <code>/</code> for templates or <code>@</code> for agent tags.
             </div>
-          ) : null}
-
-          <div className="structured-editor__hint">
-            Type <code>/</code> for templates or <code>@</code> for agent tags.
           </div>
-        </div>
+        </TemplateCommandMenu>
       ) : (
         <div className="structured-editor__surface" data-slot="input-group-control">
           <div className="structured-editor__template-meta">

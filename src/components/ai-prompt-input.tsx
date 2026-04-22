@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { ChevronDown, Paperclip, SendHorizontal, SlidersHorizontal } from 'lucide-react'
 
-import { StructuredPromptEditor, type StructuredPromptEditorValue } from '@/components/structured-prompt-editor'
+import { StructuredPromptEditor, type StructuredPromptEditorValue } from '@/components/prompt/structured-prompt-editor'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
