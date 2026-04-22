@@ -112,7 +112,7 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
             </InputGroupButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <InputGroupButton variant="outline">
+                <InputGroupButton className="ai-prompt__mode-trigger" variant="outline">
                   <SlidersHorizontal data-icon="inline-start" />
                   {mode}
                   <ChevronDown data-icon="inline-end" />
