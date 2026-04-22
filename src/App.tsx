@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/s
 import { initialTimeline, threads, type ToolSelection, type UploadedFile } from '@/data/workspace'
 import { getFallbackCopilotCapabilities, type CopilotToolId } from '@/lib/copilot-adapter'
 import { getCopilotCapabilities, runCopilot } from '@/lib/client-agent'
+import type { StructuredPromptSubmission } from '@/lib/structured-prompt'
 import { getInspectorItem, type TimelineEvent } from '@/lib/timeline'
 import { cn } from '@/lib/utils'
 import './App.css'
@@ -33,6 +34,7 @@ function App() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isRunning, setIsRunning] = useState(false)
   const [lastRuntime, setLastRuntime] = useState<'sdk' | 'cli'>('sdk')
+  const [lastStructuredSubmission, setLastStructuredSubmission] = useState<StructuredPromptSubmission | null>(null)
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === selectedThreadId) ?? threads[0],
     [selectedThreadId]
@@ -85,7 +87,9 @@ function App() {
     }
   }, [])
 
-  async function submitPrompt(prompt: string, modeLabel: string) {
+  async function submitPrompt(prompt: string, modeLabel: string, structured: StructuredPromptSubmission | null) {
+    setLastStructuredSubmission(structured)
+
     const userEvent: TimelineEvent = {
       id: crypto.randomUUID(),
       kind: 'message',
@@ -180,6 +184,7 @@ function App() {
               <span>{lastRuntime === 'sdk' ? 'Copilot SDK' : 'CLI fallback'}</span>
               <span>{enabledTools.length} tools on</span>
               {uploadedFiles.length > 0 ? <span>{uploadedFiles.length} files</span> : null}
+              {lastStructuredSubmission ? <span>{lastStructuredSubmission.templateId}</span> : null}
             </div>
 
             <div className="ai-topbar__controls">

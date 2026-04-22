@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ChevronDown, Paperclip, SendHorizontal, SlidersHorizontal } from 'lucide-react'
 
+import { StructuredPromptEditor, type StructuredPromptEditorValue } from '@/components/structured-prompt-editor'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupTextarea } from '@/components/ui/input-group'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText } from '@/components/ui/input-group'
 import type { UploadedFile } from '@/data/workspace'
+import type { StructuredPromptSubmission } from '@/lib/structured-prompt'
 import { cn } from '@/lib/utils'
 import './ai-prompt-input.css'
 
@@ -22,7 +24,7 @@ type AiPromptInputProps = {
   disabled?: boolean
   model: string
   onAttachFiles: (files: UploadedFile[]) => void
-  onSubmit: (prompt: string, mode: PromptMode) => void
+  onSubmit: (prompt: string, mode: PromptMode, structured: StructuredPromptSubmission | null) => void
   runtime: 'sdk' | 'cli'
 }
 
@@ -40,20 +42,33 @@ async function readFiles(files: FileList): Promise<UploadedFile[]> {
 }
 
 export function AiPromptInput({ attachedFiles, disabled = false, model, onAttachFiles, onSubmit, runtime }: AiPromptInputProps) {
-  const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState<PromptMode>('Auto')
+  const [editorValue, setEditorValue] = useState<StructuredPromptEditorValue>({
+    hasContent: false,
+    structured: null,
+    text: '',
+  })
+  const [editorInstanceKey, setEditorInstanceKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const usage = Math.min(100, Math.round(((prompt.length + attachedFiles.reduce((total, file) => total + file.content.length, 0)) / 12000) * 100))
+  const usage = Math.min(
+    100,
+    Math.round(((editorValue.text.length + attachedFiles.reduce((total, file) => total + file.content.length, 0)) / 12000) * 100),
+  )
 
   function submitPrompt() {
-    const trimmedPrompt = prompt.trim()
+    const trimmedPrompt = editorValue.text.trim()
 
     if (!trimmedPrompt || disabled) {
       return
     }
 
-    onSubmit(trimmedPrompt, mode)
-    setPrompt('')
+    onSubmit(trimmedPrompt, mode, editorValue.structured)
+    setEditorValue({
+      hasContent: false,
+      structured: null,
+      text: '',
+    })
+    setEditorInstanceKey((currentValue) => currentValue + 1)
   }
 
   return (
@@ -71,18 +86,12 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
         </div>
       ) : null}
       <InputGroup className="ai-prompt__group">
-        <InputGroupTextarea
-          aria-label="Prompt"
-          className="ai-prompt__textarea"
+        <StructuredPromptEditor
+          key={editorInstanceKey}
           disabled={disabled}
-          onChange={(event) => setPrompt(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-              submitPrompt()
-            }
-          }}
+          onSubmitShortcut={submitPrompt}
+          onValueChange={setEditorValue}
           placeholder="Message Copilot about this workspace..."
-          value={prompt}
         />
         <InputGroupAddon align="block-end" className="ai-prompt__bar">
           <div className="ai-prompt__tools">
@@ -125,8 +134,17 @@ export function AiPromptInput({ attachedFiles, disabled = false, model, onAttach
           </div>
           <div className="ai-prompt__actions">
             <InputGroupText className="hidden md:flex">{runtime === 'sdk' ? 'SDK' : 'CLI'} · {model}</InputGroupText>
+            {editorValue.structured ? (
+              <InputGroupText className="hidden md:flex">Template · {editorValue.structured.templateId}</InputGroupText>
+            ) : null}
             <InputGroupText className={cn('ai-prompt__usage', usage > 70 && 'text-foreground')}>{usage}%</InputGroupText>
-            <Button className="ai-prompt__send" disabled={disabled || !prompt.trim()} onClick={submitPrompt} size="icon" type="button">
+            <Button
+              className="ai-prompt__send"
+              disabled={disabled || !editorValue.hasContent}
+              onClick={submitPrompt}
+              size="icon"
+              type="button"
+            >
               <SendHorizontal data-icon="inline-start" />
               <span className="sr-only">Send prompt</span>
             </Button>

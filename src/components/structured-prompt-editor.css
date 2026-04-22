@@ -1,0 +1,198 @@
+.structured-editor {
+  position: relative;
+  flex: 1;
+}
+
+.structured-editor__draft {
+  position: relative;
+}
+
+.structured-editor__menu {
+  position: absolute;
+  right: var(--space-s);
+  left: var(--space-s);
+  bottom: calc(var(--space-m) + 2.25rem);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 1px solid rgba(0, 20, 63, 0.08);
+  border-radius: var(--ds-radius-md);
+  padding: 0.4rem;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 1rem 2.4rem rgba(0, 20, 63, 0.12);
+}
+
+.structured-editor__menu-label,
+.structured-editor__hint {
+  margin: 0;
+  color: var(--ds-color-text-subtle);
+  font-size: 0.74rem;
+}
+
+.structured-editor__hint {
+  padding: 0 var(--space-m) var(--space-xs);
+}
+
+.structured-editor__hint code {
+  padding: 0.08rem 0.32rem;
+  border: 1px solid rgba(0, 20, 63, 0.08);
+  border-radius: 999px;
+  background: rgba(246, 248, 251, 0.96);
+  color: var(--ds-color-text-muted);
+  font-family: inherit;
+}
+
+.structured-editor__menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-s);
+  border: 0;
+  border-radius: calc(var(--ds-radius-md) - 2px);
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  background: transparent;
+  transition: background-color 140ms ease;
+}
+
+.structured-editor__menu-item:hover {
+  background: rgba(245, 247, 251, 0.96);
+}
+
+.structured-editor__menu-keyword {
+  min-width: 5.8rem;
+  color: var(--ds-color-link);
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.structured-editor__menu-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.structured-editor__menu-title {
+  color: var(--ds-color-text-primary);
+  font-size: 0.92rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.structured-editor__menu-description {
+  color: var(--ds-color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.structured-editor__surface {
+  display: flex;
+  min-height: 8.5rem;
+  flex-direction: column;
+  gap: var(--space-s);
+  padding: var(--space-m);
+}
+
+.structured-editor__template-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s);
+}
+
+.structured-editor__template-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(4, 97, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.34rem 0.74rem;
+  background: rgba(4, 97, 255, 0.08);
+  color: var(--ds-color-link);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.structured-editor__canvas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ds-color-text-primary);
+  line-height: 1.7;
+}
+
+.structured-editor__text,
+.structured-editor__segment {
+  font-size: 1rem;
+}
+
+.structured-editor__segment {
+  display: inline-block;
+  min-width: 1.2ch;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.structured-editor__segment--prefix,
+.structured-editor__segment--suffix {
+  min-width: 3ch;
+}
+
+.structured-editor__segment--empty::before {
+  content: attr(data-placeholder);
+  color: var(--ds-color-text-muted);
+}
+
+.structured-editor__slot-shell {
+  display: inline-flex;
+}
+
+.structured-editor__slot {
+  min-width: 5.5rem;
+  height: 2rem;
+  border: 1px solid rgba(0, 20, 63, 0.1);
+  border-radius: calc(var(--ds-radius-md) - 2px);
+  padding: 0 0.7rem;
+  background: rgba(248, 250, 253, 0.96);
+  color: var(--ds-color-text-primary);
+  font: inherit;
+  outline: none;
+  box-shadow: none;
+}
+
+.structured-editor__slot:focus {
+  border-color: rgba(4, 97, 255, 0.28);
+  box-shadow: 0 0 0 3px rgba(4, 97, 255, 0.08);
+}
+
+.structured-editor__slot--date {
+  min-width: 8.4rem;
+}
+
+.structured-editor__slot--select {
+  min-width: 7rem;
+}
+
+@media (max-width: 599px) {
+  .structured-editor__menu {
+    right: var(--space-s);
+    left: var(--space-s);
+    bottom: 5.3rem;
+  }
+
+  .structured-editor__surface {
+    min-height: 7rem;
+    padding: var(--space-s);
+  }
+
+  .structured-editor__canvas {
+    align-items: flex-start;
+  }
+
+  .structured-editor__slot,
+  .structured-editor__slot--date,
+  .structured-editor__slot--select {
+    min-width: min(100%, 100%);
+  }
+}
